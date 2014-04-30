@@ -1,10 +1,10 @@
 package gehversuch
 
-import de.gehversuch.customerservice._
 import org.apache.camel.{Exchange, Processor}
 import org.apache.camel.component.cxf.common.message.CxfConstants
 import java.util
 import scala.collection.JavaConversions._
+import cc.notsoclever.customerservice._
 
 /**
  * Created by dueerkopra on 28.04.2014.

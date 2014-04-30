@@ -1,11 +1,9 @@
 package gehversuch
 
-import de.gehversuch.customerservice._
 import java.util.{GregorianCalendar, Date}
 import java.math.BigDecimal
 import scala.collection.JavaConversions._
-import javax.xml.ws.{AsyncHandler, Response}
-import java.util.concurrent.Future
+import cc.notsoclever.customerservice.{CustomerType, Customer, CustomerService}
 
 /**
  * Created by dueerkopra on 28.04.2014.
