@@ -2,6 +2,7 @@ package gehversuch
 
 import akka.actor.{Props, ActorSystem}
 import akka.camel.CamelExtension
+import gehversuch.customerservice.{CustomerServiceProducer, CustomerServiceConsumer, CustomCamelRouteBuilder}
 
 /**
  * Created by rdu on 30.04.14.

@@ -1,4 +1,4 @@
-package gehversuch
+package gehversuch.customerservice
 
 import akka.actor.Actor
 import akka.camel.Producer

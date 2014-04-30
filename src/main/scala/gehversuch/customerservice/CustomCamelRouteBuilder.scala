@@ -1,4 +1,4 @@
-package gehversuch
+package gehversuch.customerservice
 
 import org.apache.camel.builder.RouteBuilder
 import org.apache.camel.model.dataformat.SoapJaxbDataFormat
