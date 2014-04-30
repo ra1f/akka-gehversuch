@@ -1,6 +1,6 @@
-package mnet.de
+package gehversuch
 
-import cc.notsoclever.customerservice._
+import de.gehversuch.customerservice._
 import java.util.{GregorianCalendar, Date}
 import java.math.BigDecimal
 import scala.collection.JavaConversions._

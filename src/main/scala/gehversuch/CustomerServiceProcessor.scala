@@ -1,6 +1,6 @@
-package mnet.de
+package gehversuch
 
-import cc.notsoclever.customerservice._
+import de.gehversuch.customerservice._
 import org.apache.camel.{Exchange, Processor}
 import org.apache.camel.component.cxf.common.message.CxfConstants
 import java.util

@@ -1,4 +1,4 @@
-package mnet.de
+package gehversuch
 
 import org.apache.camel.main.Main
 import org.apache.camel.scala.dsl.builder.RouteBuilderSupport
