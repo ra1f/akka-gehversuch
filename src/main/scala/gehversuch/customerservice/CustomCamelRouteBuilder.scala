@@ -17,7 +17,8 @@ class CustomCamelRouteBuilder extends RouteBuilder {
 
     from("direct:customerService")
       .unmarshal(soapDF)
-      .process(new CustomerServiceProcessor())
+      .process(new CustomerServiceProcessor)
       .marshal(soapDF)
   }
+
 }
