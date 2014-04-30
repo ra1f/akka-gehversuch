@@ -17,13 +17,13 @@
   specific language governing permissions and limitations
   under the License.
 -->
-<wsdl:definitions name="CustomerServiceService" targetNamespace="http://customerservice.notsoclever.cc/"
-                  xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="http://customerservice.notsoclever.cc/"
+<wsdl:definitions name="CustomerServiceService" targetNamespace="http://customerservice.gehversuch.de/"
+                  xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="http://customerservice.gehversuch.de/"
                   xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/">
     <wsdl:types>
-        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:tns="http://customerservice.notsoclever.cc/"
+        <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:tns="http://customerservice.gehversuch.de/"
                    attributeFormDefault="unqualified" elementFormDefault="unqualified"
-                   targetNamespace="http://customerservice.notsoclever.cc/">
+                   targetNamespace="http://customerservice.gehversuch.de/">
             <xs:element name="getCustomersByName" type="tns:getCustomersByName"/>
             <xs:element name="updateCustomer" type="tns:updateCustomer"/>
             <xs:element name="updateCustomerResponse" type="tns:updateCustomerResponse"/>

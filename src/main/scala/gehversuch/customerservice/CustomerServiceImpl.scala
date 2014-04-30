@@ -3,7 +3,7 @@ package gehversuch.customerservice
 import java.util.GregorianCalendar
 import java.math.BigDecimal
 import scala.collection.JavaConversions._
-import cc.notsoclever.customerservice.{CustomerType, Customer, CustomerService}
+import de.gehversuch.customerservice.{CustomerType, Customer, CustomerService}
 
 /**
  * Created by dueerkopra on 28.04.2014.

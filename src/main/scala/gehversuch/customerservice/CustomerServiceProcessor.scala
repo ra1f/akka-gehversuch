@@ -1,7 +1,7 @@
 package gehversuch.customerservice
 
 import org.apache.camel.{Exchange, Processor}
-import cc.notsoclever.customerservice._
+import de.gehversuch.customerservice._
 
 /**
  * Created by dueerkopra on 28.04.2014.
