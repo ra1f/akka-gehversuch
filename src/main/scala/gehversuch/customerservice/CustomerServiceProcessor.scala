@@ -18,9 +18,17 @@ class CustomerServiceProcessor extends Processor {
       case "getCustomersByName" => {
         val name: String = inMessage.getBody(classOf[GetCustomersByName]).getName
         val customers: Array[Customer] = customerService.getCustomersByName(name)
-        val response = new GetCustomersByNameResponse
-        response.setReturn(customers)
-        exchange.getOut.setBody(response)
+        try {
+          val response = new GetCustomersByNameResponse
+          response.setReturn(customers)
+          exchange.getOut.setBody(response)
+        } catch {
+          case e: NoSuchCustomerException => {
+            exchange.getOut.setFault(true)
+            val errorResponse = new NoSuchCustomer
+            exchange.getOut.setBody(errorResponse)
+          }
+        }
       }
 
       case "updateCustomer" => {
