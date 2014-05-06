@@ -21,9 +21,9 @@ class CustomerServiceConsumer extends Actor with Consumer {
   def receive = {
     case msg: CamelMessage =>  msg.getHeaderAs("SOAPAction", classOf[String], camelContext) match {
       case "getCustomersByName" =>
-        unmarshaller forward SOAPUnmarshallingMessage(msg.withBodyAs(classOf[String])(camelContext), new GetCustomersByName)
+        unmarshaller forward SOAPUnmarshallingMessage(msg.withBodyAs(classOf[String]), new GetCustomersByName)
       case "updateCustomer" =>
-        unmarshaller forward SOAPUnmarshallingMessage(msg.withBodyAs(classOf[String])(camelContext), new UpdateCustomer)
+        unmarshaller forward SOAPUnmarshallingMessage(msg.withBodyAs(classOf[String]), new UpdateCustomer)
     }
 
   }

@@ -20,7 +20,7 @@ case class SOAPUnmarshallingMessage[P](message: CamelMessage, prototype: P)
 
 class SOAPUnmarshallingActor extends Actor with ActorLogging {
 
-  val dispatcher = context actorOf Props[CustomerServiceDelegationActor]
+  val serviceDelegator = context actorOf Props[CustomerServiceDelegationActor]
 
   def receive = {
     case SOAPUnmarshallingMessage(message, prototype) => {
@@ -42,9 +42,14 @@ class SOAPUnmarshallingActor extends Actor with ActorLogging {
       }
 
       val jaxbContext = JAXBContext newInstance prototype.getClass
-      val unmarshaller = jaxbContext createUnmarshaller
-      val o = unmarshaller unmarshal(reader, prototype.getClass)
-      dispatcher forward (new CamelMessage(o.getValue, message.headers))
+
+      try {
+        val o = jaxbContext.createUnmarshaller.unmarshal(reader, prototype.getClass)
+        serviceDelegator forward (new CamelMessage(o.getValue, message.headers))
+      } catch {
+        case e: Exception =>
+          sender ! e; throw e //TODO: error marshalling
+      }
     }
   }
 

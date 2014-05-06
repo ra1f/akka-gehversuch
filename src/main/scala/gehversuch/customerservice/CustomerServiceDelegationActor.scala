@@ -43,7 +43,7 @@ class CustomerServiceDelegationActor extends Actor with ActorLogging {
         }
 
         case "updateCustomer" => {
-          val customer: Customer = msg.getBodyAs(classOf[UpdateCustomer], camelContext).getCustomer
+          val customer = msg.getBodyAs(classOf[UpdateCustomer], camelContext).getCustomer
           implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(new ForkJoinPool)
           val f = Future {
             customerService updateCustomer customer
