@@ -2,34 +2,18 @@ package gehversuch.customerservice
 
 import java.util.GregorianCalendar
 import java.math.BigDecimal
-import scala.collection.JavaConversions._
-import de.gehversuch.customerservice.{NoSuchCustomerException, CustomerType, Customer, CustomerService}
+import de.gehversuch.customerservice._
 
 /**
  * Created by dueerkopra on 28.04.2014.
  */
 class CustomerServiceImpl extends CustomerService {
 
-  /*private def customers: Map[String, Customer] = {
+  private var customers: List[Customer] = {
 
     val customer1 = new Customer
-    val name = "Johns, Mary"
-    customer1 setName name
-    customer1.getAddress.add("Pine Street 200")
-    val bDate = new GregorianCalendar(2009, 1, 1).getTime
-    customer1 setBirthDate bDate
-    customer1 setNumOrders 1
-    customer1 setRevenue 10000
-    customer1 setTest new BigDecimal(1.5)
-    customer1 setType CustomerType.BUSINESS
-    Map(name -> customer1)
-  }*/
-
-  private def customers: List[Customer] = {
-
-    val customer1 = new Customer
-    val name = "Johns, Mary"
-    customer1 setName name
+    customer1 setCustomerId 1234
+    customer1 setName "Johns, Mary"
     customer1.getAddress :+ "Pine Street 200"
     val bDate = new GregorianCalendar(2009, 1, 1).getTime
     customer1 setBirthDate bDate
@@ -37,25 +21,47 @@ class CustomerServiceImpl extends CustomerService {
     customer1 setRevenue 10000
     customer1 setTest new BigDecimal(1.5)
     customer1 setType CustomerType.BUSINESS
-    //val c = new java.util.ArrayList[Customer]
-    //c.add(customer1)
     List(customer1)
   }
 
 
   override def getCustomersByName(name: String): Array[Customer] = {
 
-    val resultList = customers.filter(p => p.getName startsWith name)
-    resultList.isEmpty match {
-      case true => throw new NoSuchCustomerException(name)
-      case false => resultList.toArray
+    customers.filter(p => p.getName startsWith name) match {
+      case l => l.isEmpty match {
+        case true =>
+          new NoSuchCustomer match {
+            case nsc: NoSuchCustomer =>
+              nsc.setCustomerName(name)
+              throw new NoSuchCustomerException("Customer not found", nsc)
+          }
+        case false => l.toArray
+      }
     }
 
-    //Array(customers.get(0))
   }
 
   override def updateCustomer(customer: Customer): Customer = {
-    //customers :+ customer
-    customer
+
+    // Updates the customers list by customer argument (merge) if the argument
+    // identified by customer name is already part of the list
+    // otherwise exception is thrown
+    customers.filter(c => c.getCustomerId == customer.getCustomerId) match {
+      case l => l.isEmpty match {
+        case true =>
+          new NoSuchCustomer match {
+            case nsc: NoSuchCustomer =>
+              nsc.setCustomerName(customer.getName)
+              throw new NoSuchCustomerException("Customer not found", nsc)
+          }
+        case false =>
+          val id = customer.getCustomerId
+          customers = customers.map(c => c.getCustomerId match {case `id` => customer; case _ => c})
+      }
+
+    }
+
+    return customer
+
   }
 }

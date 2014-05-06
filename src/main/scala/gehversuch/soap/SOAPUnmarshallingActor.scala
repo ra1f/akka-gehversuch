@@ -2,32 +2,33 @@ package gehversuch.soap
 
 import akka.actor._
 import akka.camel.CamelMessage
-import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.bind._
-import javax.xml.soap.MessageFactory
-import java.io.{File, StringReader, ByteArrayOutputStream}
-import javax.xml.transform.stream.{StreamResult, StreamSource}
-import javax.xml.transform.Result
+import java.io.StringReader
+import javax.xml.transform.stream.StreamSource
 import javax.xml.stream.XMLInputFactory
-import de.gehversuch.customerservice.{NoSuchCustomerException, GetCustomersByName}
+import de.gehversuch.customerservice.NoSuchCustomerException
 import gehversuch.customerservice.CustomerServiceDelegationActor
 import akka.actor.SupervisorStrategy._
 import akka.actor.OneForOneStrategy
-import akka.actor.OneForOneStrategy
+import scala.concurrent.duration._
 
 /**
  * Created by dueerkopra on 02.05.2014.
  */
-class SOAPUnmarshallingActor[P](product: P) extends Actor with ActorLogging {
+
+case class SOAPUnmarshallingMessage[P](message: CamelMessage, prototype: P)
+
+class SOAPUnmarshallingActor extends Actor with ActorLogging {
 
   val dispatcher = context actorOf Props[CustomerServiceDelegationActor]
 
   def receive = {
-    case msg: CamelMessage => {
-      log.debug("Received message: {}", msg)
+    case SOAPUnmarshallingMessage(message, prototype) => {
+      log.debug("Received message: {}", message)
 
       val xif = XMLInputFactory newInstance
-      val reader = xif.createXMLStreamReader(new StreamSource(new StringReader(msg.body.toString)))
+      val reader = xif.createXMLStreamReader(new StreamSource(
+        new StringReader(message.body.toString)))
       reader.nextTag
 
       while (reader getLocalName match {
@@ -35,22 +36,23 @@ class SOAPUnmarshallingActor[P](product: P) extends Actor with ActorLogging {
         case "Body" => true
         case "Envelope" => true
         case _ => false
-      }){
+      }) {
         log.debug("Local name: {}", reader.getLocalName)
         reader.nextTag
       }
 
-      val jaxbContext = JAXBContext newInstance product.getClass
+      val jaxbContext = JAXBContext newInstance prototype.getClass
       val unmarshaller = jaxbContext createUnmarshaller
-      val o = unmarshaller unmarshal(reader, product.getClass)
-      dispatcher forward (new CamelMessage(o.getValue, msg.headers))
+      val o = unmarshaller unmarshal(reader, prototype.getClass)
+      dispatcher forward (new CamelMessage(o.getValue, message.headers))
     }
-    //case _ => msg
   }
 
-  /*override def supervisorStrategy = OneForOneStrategy(maxNrOfRetries = 0) {
-    case _: NoSuchElementException => Escalate
-    case _ => Resume
-  }*/
+  override val supervisorStrategy =
+    OneForOneStrategy(maxNrOfRetries = 10, withinTimeRange = 1 minute) {
+      case _: NoSuchCustomerException => Resume
+      case t =>
+        super.supervisorStrategy.decider.applyOrElse(t, (_: Any) => Escalate)
+    }
 
 }
