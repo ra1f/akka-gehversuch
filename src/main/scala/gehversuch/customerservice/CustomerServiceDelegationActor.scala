@@ -3,7 +3,7 @@ package gehversuch.customerservice
 import akka.actor._
 import akka.camel.{CamelExtension, CamelMessage}
 import de.gehversuch.customerservice._
-import gehversuch.soap.{SOAPMarshallingMessage, SOAPMarshallingActor}
+import gehversuch.soap.{SOAPMarshallingUnmodeledFaultMessage, SOAPMarshallingModeledFaultMessage, SOAPMarshallingSuccessMessage, SOAPMarshallingActor}
 import scala.concurrent.{ExecutionContext, Future}
 import java.util.concurrent.ForkJoinPool
 
@@ -19,8 +19,10 @@ class CustomerServiceDelegationActor extends Actor with ActorLogging {
 
   def receive = {
 
-    case msg: CamelMessage => {
+    case msg: CamelMessage =>
+
       msg.getHeaderAs("SOAPAction", classOf[String], camelContext) match {
+
         case "getCustomersByName" => {
           val name = msg.getBodyAs(classOf[GetCustomersByName], camelContext).getName
           implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(new ForkJoinPool)
@@ -32,13 +34,12 @@ class CustomerServiceDelegationActor extends Actor with ActorLogging {
             case customers: Array[Customer] =>
               val response = new GetCustomersByNameResponse
               response setReturn customers
-              marshaller forward SOAPMarshallingMessage(
+              marshaller forward SOAPMarshallingSuccessMessage(
                 objectFactory createGetCustomersByNameResponse response, originalSender)
           }
           f onFailure {
-            case e: NoSuchCustomerException => marshaller forward SOAPMarshallingMessage(
-              objectFactory createNoSuchCustomer e.getFaultInfo, originalSender)
-            case e: Exception => throw e
+            case e: NoSuchCustomerException => marshaller forward fault(e, originalSender)
+            case e: Exception => throw e //TODO: SOAP marshalling
           }
         }
 
@@ -53,20 +54,23 @@ class CustomerServiceDelegationActor extends Actor with ActorLogging {
             case customer: Customer =>
               val response = new UpdateCustomerResponse
               response setReturn customer
-              marshaller forward SOAPMarshallingMessage(
+              marshaller forward SOAPMarshallingSuccessMessage(
                 objectFactory createUpdateCustomerResponse response, originalSender)
           }
           f onFailure {
-            case e: NoSuchCustomerException => marshaller forward SOAPMarshallingMessage(
-              objectFactory createNoSuchCustomer e.getFaultInfo, originalSender)
-            case e: Exception => throw e
+            case e: NoSuchCustomerException => marshaller forward fault(e, originalSender)
+            case e: Exception => throw e //TODO: SOAP marshalling
           }
-
         }
-
         //TODO: Else send Failure!!!
       }
-    }
 
+    case msg: SOAPMarshallingUnmodeledFaultMessage => marshaller forward msg
+  }
+
+  def fault(e: NoSuchCustomerException, originalSender: ActorRef) = {
+
+    val faultBean = objectFactory.createNoSuchCustomer(e.getFaultInfo)
+    SOAPMarshallingModeledFaultMessage(faultBean, e.getMessage, originalSender)
   }
 }

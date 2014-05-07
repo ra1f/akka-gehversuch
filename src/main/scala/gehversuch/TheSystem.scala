@@ -1,6 +1,6 @@
 package gehversuch
 
-import akka.actor.{Props, ActorSystem}
+import akka.actor.{DeadLetter, Props, ActorSystem}
 import gehversuch.customerservice.CustomerServiceConsumer
 
 /**
@@ -10,7 +10,7 @@ object TheSystem extends App {
 
   val system = ActorSystem("gehversuch-system")
   val consumer = system.actorOf(Props(classOf[CustomerServiceConsumer]))
-  //system.eventStream.subscribe(consumer, classOf[DeadLetter])
+  system.eventStream.subscribe(consumer, classOf[DeadLetter])
 }
 
 
