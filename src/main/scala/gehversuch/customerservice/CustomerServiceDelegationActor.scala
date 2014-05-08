@@ -3,9 +3,12 @@ package gehversuch.customerservice
 import akka.actor._
 import akka.camel.{CamelExtension, CamelMessage}
 import de.gehversuch.customerservice._
-import gehversuch.soap.{SOAPMarshallingUnmodeledFaultMessage, SOAPMarshallingModeledFaultMessage, SOAPMarshallingSuccessMessage, SOAPMarshallingActor}
+import gehversuch.soap._
 import scala.concurrent.{ExecutionContext, Future}
 import java.util.concurrent.ForkJoinPool
+import gehversuch.soap.SOAPMarshallingSuccessMessage
+import gehversuch.soap.SOAPMarshallingUnmodeledFaultMessage
+import gehversuch.soap.SOAPMarshallingModeledFaultMessage
 
 /**
  * Created by dueerkopra on 02.05.2014.
@@ -23,7 +26,7 @@ class CustomerServiceDelegationActor extends Actor with ActorLogging {
 
       msg.getHeaderAs("SOAPAction", classOf[String], camelContext) match {
 
-        case "getCustomersByName" => {
+        case "getCustomersByName" =>
           val name = msg.getBodyAs(classOf[GetCustomersByName], camelContext).getName
           implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(new ForkJoinPool)
           val f = Future {
@@ -38,12 +41,12 @@ class CustomerServiceDelegationActor extends Actor with ActorLogging {
                 objectFactory createGetCustomersByNameResponse response, originalSender)
           }
           f onFailure {
-            case e: NoSuchCustomerException => marshaller forward fault(e, originalSender)
-            case e: Exception => throw e //TODO: SOAP marshalling
+            case e: NoSuchCustomerException => marshaller forward modeledFault(e, originalSender)
+            case e: Exception => marshaller forward unmodeledFault(e, originalSender)
           }
-        }
 
-        case "updateCustomer" => {
+
+        case "updateCustomer" =>
           val customer = msg.getBodyAs(classOf[UpdateCustomer], camelContext).getCustomer
           implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(new ForkJoinPool)
           val f = Future {
@@ -58,19 +61,20 @@ class CustomerServiceDelegationActor extends Actor with ActorLogging {
                 objectFactory createUpdateCustomerResponse response, originalSender)
           }
           f onFailure {
-            case e: NoSuchCustomerException => marshaller forward fault(e, originalSender)
-            case e: Exception => throw e //TODO: SOAP marshalling
+            case e: NoSuchCustomerException => marshaller forward modeledFault(e, originalSender)
+            case e: Exception => marshaller forward unmodeledFault(e, originalSender)
           }
-        }
-        //TODO: Else send Failure!!!
+
       }
 
     case msg: SOAPMarshallingUnmodeledFaultMessage => marshaller forward msg
   }
 
-  def fault(e: NoSuchCustomerException, originalSender: ActorRef) = {
+  def modeledFault(e: NoSuchCustomerException, originalSender: ActorRef) = {
 
     val faultBean = objectFactory.createNoSuchCustomer(e.getFaultInfo)
     SOAPMarshallingModeledFaultMessage(faultBean, e.getMessage, originalSender)
   }
+
+  def unmodeledFault(e: Exception, originalSender: ActorRef) = SOAPMarshallingUnmodeledFaultMessage(e, originalSender)
 }

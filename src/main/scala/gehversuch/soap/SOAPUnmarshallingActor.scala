@@ -6,7 +6,6 @@ import javax.xml.bind._
 import java.io.StringReader
 import javax.xml.transform.stream.StreamSource
 import javax.xml.stream.XMLInputFactory
-import gehversuch.customerservice.CustomerServiceDelegationActor
 
 /**
  * Created by dueerkopra on 02.05.2014.
@@ -14,9 +13,9 @@ import gehversuch.customerservice.CustomerServiceDelegationActor
 
 case class SOAPUnmarshallingMessage[P](message: CamelMessage, prototype: P)
 
-class SOAPUnmarshallingActor extends Actor with ActorLogging {
+class SOAPUnmarshallingActor(serviceDelegatorProps: Props) extends Actor with ActorLogging {
 
-  val serviceDelegator = context.actorOf(Props[CustomerServiceDelegationActor])
+  val serviceDelegator = context.actorOf(serviceDelegatorProps)
 
   def receive = {
 
@@ -43,7 +42,7 @@ class SOAPUnmarshallingActor extends Actor with ActorLogging {
       } catch {
 
         case e: Exception =>
-          serviceDelegator forward SOAPMarshallingUnmodeledFaultMessage(e)
+          serviceDelegator forward SOAPMarshallingUnmodeledFaultMessage(e, sender)
       }
   }
 }

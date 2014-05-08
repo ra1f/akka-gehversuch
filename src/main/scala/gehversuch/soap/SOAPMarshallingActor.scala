@@ -14,7 +14,7 @@ import org.w3c.dom.Document
 
 case class SOAPMarshallingSuccessMessage[T](element: JAXBElement[T], originalSender: ActorRef)
 case class SOAPMarshallingModeledFaultMessage[T](element: JAXBElement[T], message: String, originalSender: ActorRef)
-case class SOAPMarshallingUnmodeledFaultMessage(exception: Exception)
+case class SOAPMarshallingUnmodeledFaultMessage(exception: Exception, originalSender: ActorRef)
 
 class SOAPMarshallingActor extends Actor {
 
@@ -40,7 +40,7 @@ class SOAPMarshallingActor extends Actor {
 
       originalSender ! response(soapMessage)
 
-    case SOAPMarshallingUnmodeledFaultMessage(exception) =>
+    case SOAPMarshallingUnmodeledFaultMessage(exception, originalSender) =>
 
       val soapMessage = MessageFactory.newInstance.createMessage
 
@@ -48,7 +48,7 @@ class SOAPMarshallingActor extends Actor {
         addFault(new QName(SOAPConstants.URI_NS_SOAP_1_1_ENVELOPE, "SERVER"), exception.getClass.getName).
         addDetail.addTextNode(exception.toString)
 
-      sender ! response(soapMessage)
+      originalSender ! response(soapMessage)
   }
 
   def marshal(element: JAXBElement[Any]): Document = {
