@@ -1,15 +1,15 @@
 package gehversuch.customerservice
 
-import akka.actor.{DeadLetter, ActorLogging, Props, Actor}
 import akka.camel.{CamelMessage, Consumer}
+import akka.actor.{DeadLetter, Props, ActorLogging}
 import gehversuch.Configuration
 import de.gehversuch.customerservice.{UpdateCustomer, GetCustomersByName}
-import gehversuch.soap.{SOAPUnmarshallingMessage, SOAPUnmarshallingActor}
+import gehversuch.soap_alt.{SOAPUnmarshallingMessage, SOAPUnmarshallingActor}
 
 /**
- * Created by rdu on 30.04.14.
+ * Created by dueerkopra on 13.05.2014.
  */
-class CustomerServiceConsumerActor extends Consumer with ActorLogging {
+class CustomerServiceConsumerAltActor extends Consumer with ActorLogging {
 
   val portHttp = Configuration.portHttp
   val host = Configuration.host
@@ -19,11 +19,11 @@ class CustomerServiceConsumerActor extends Consumer with ActorLogging {
   val unmarshaller = context.actorOf(Props(classOf[SOAPUnmarshallingActor], Props[CustomerServiceDelegationActor]))
 
   def receive = {
-    case msg: CamelMessage =>  msg.getHeaderAs("SOAPAction", classOf[String], camelContext) match {
+    case msg: CamelMessage => msg.getHeaderAs("SOAPAction", classOf[String], camelContext) match {
       case "getCustomersByName" =>
         forward(msg, new GetCustomersByName)
       case "updateCustomer" =>
-        forward (msg, new UpdateCustomer)
+        forward(msg, new UpdateCustomer)
     }
     case dl: DeadLetter => log.debug(dl.toString)
   }
@@ -33,4 +33,5 @@ class CustomerServiceConsumerActor extends Consumer with ActorLogging {
     log.debug("Received message: {}", message)
     unmarshaller forward SOAPUnmarshallingMessage(message, prototype)
   }
+
 }
