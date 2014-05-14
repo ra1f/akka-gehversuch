@@ -11,7 +11,8 @@ import javax.xml.stream.XMLInputFactory
  * Created by dueerkopra on 02.05.2014.
  */
 
-case class SOAPUnmarshallingMessage[P](message: CamelMessage, prototype: P)
+case class SOAPUnmarshallingMessage[P](message: String, prototype: P)
+case class SOAPUnmarshallingResultMessage[P](product: P)
 
 class SOAPUnmarshallingActor extends Actor with ActorLogging {
 
@@ -21,8 +22,7 @@ class SOAPUnmarshallingActor extends Actor with ActorLogging {
       try {
 
         val xif = XMLInputFactory newInstance
-        val reader = xif.createXMLStreamReader(new StreamSource(
-          new StringReader(message.body.toString)))
+        val reader = xif.createXMLStreamReader(new StreamSource(new StringReader(message)))
         reader.nextTag
 
         while (reader getLocalName match {
@@ -36,7 +36,7 @@ class SOAPUnmarshallingActor extends Actor with ActorLogging {
 
         val jaxbContext = JAXBContext newInstance prototype.getClass
         val o = jaxbContext.createUnmarshaller.unmarshal(reader, prototype.getClass)
-        sender ! (new CamelMessage(o.getValue, message.headers))
+        sender ! SOAPUnmarshallingResultMessage(o.getValue)
       } catch {
 
         case e: Exception =>

@@ -15,17 +15,12 @@ import gehversuch.soap.SOAPMarshallingUnmodeledFaultMessage
 class CustomerServiceDelegationAltActor extends Actor with ActorLogging {
 
   val customerService: CustomerService = new CustomerServiceImpl
-  val camelContext = CamelExtension(context.system).context
   val objectFactory = new ObjectFactory
 
   def receive = {
 
-    case msg: CamelMessage =>
-
-      msg.getHeaderAs("SOAPAction", classOf[String], camelContext) match {
-
-        case "getCustomersByName" =>
-          val name = msg.getBodyAs(classOf[GetCustomersByName], camelContext).getName
+        case o: GetCustomersByName =>
+          val name = o.getName
           implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(new ForkJoinPool)
           val f = Future {
             customerService getCustomersByName name
@@ -44,8 +39,8 @@ class CustomerServiceDelegationAltActor extends Actor with ActorLogging {
           }
 
 
-        case "updateCustomer" =>
-          val customer = msg.getBodyAs(classOf[UpdateCustomer], camelContext).getCustomer
+        case o: UpdateCustomer =>
+          val customer = o.getCustomer
           implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(new ForkJoinPool)
           val f = Future {
             customerService updateCustomer customer
@@ -63,9 +58,6 @@ class CustomerServiceDelegationAltActor extends Actor with ActorLogging {
             case e: Exception => sender ! unmodeledFault(e, originalSender)
           }
 
-      }
-
-    case msg: SOAPMarshallingUnmodeledFaultMessage => sender ! msg
   }
 
   def modeledFault(e: NoSuchCustomerException, originalSender: ActorRef) = {
