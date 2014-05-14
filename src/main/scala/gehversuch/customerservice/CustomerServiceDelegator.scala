@@ -27,11 +27,10 @@ class CustomerServiceDelegator extends Actor with ActorLogging {
             case customers: Array[Customer] =>
               val response = new GetCustomersByNameResponse
               response setReturn customers
-              originalSender ! SOAPMarshallingSuccessMessage(
-                objectFactory createGetCustomersByNameResponse response, originalSender)
+              originalSender ! SOAPMarshallingSuccessMessage(objectFactory createGetCustomersByNameResponse response)
           }
           f onFailure {
-            case e: NoSuchCustomerException => originalSender ! modeledFault(e, originalSender)
+            case e: NoSuchCustomerException => originalSender ! modeledFault(e)
             case e: Exception => originalSender ! unmodeledFault(e, originalSender)
           }
 
@@ -47,21 +46,20 @@ class CustomerServiceDelegator extends Actor with ActorLogging {
             case customer: Customer =>
               val response = new UpdateCustomerResponse
               response setReturn customer
-              originalSender ! SOAPMarshallingSuccessMessage(
-                objectFactory createUpdateCustomerResponse response, originalSender)
+              originalSender ! SOAPMarshallingSuccessMessage(objectFactory createUpdateCustomerResponse response)
           }
           f onFailure {
-            case e: NoSuchCustomerException => originalSender ! modeledFault(e, originalSender)
+            case e: NoSuchCustomerException => originalSender ! modeledFault(e)
             case e: Exception => originalSender ! unmodeledFault(e, originalSender)
           }
 
   }
 
-  def modeledFault(e: NoSuchCustomerException, originalSender: ActorRef) = {
+  def modeledFault(e: NoSuchCustomerException) = {
 
     val faultBean = objectFactory.createNoSuchCustomer(e.getFaultInfo)
-    SOAPModeledFaultMessage(faultBean, e.getMessage, originalSender)
+    SOAPModeledFaultMessage(faultBean, e.getMessage)
   }
 
-  def unmodeledFault(e: Exception, originalSender: ActorRef) = SOAPUnmodeledFaultMessage(e, originalSender)
+  def unmodeledFault(e: Exception, originalSender: ActorRef) = SOAPUnmodeledFaultMessage(e)
 }
