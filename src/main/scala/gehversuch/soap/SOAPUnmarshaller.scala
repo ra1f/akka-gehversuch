@@ -1,7 +1,6 @@
 package gehversuch.soap
 
 import akka.actor._
-import akka.camel.CamelMessage
 import javax.xml.bind._
 import java.io.StringReader
 import javax.xml.transform.stream.StreamSource
@@ -37,8 +36,7 @@ class SOAPUnmarshaller extends Actor with ActorLogging {
         val o = jaxbContext.createUnmarshaller.unmarshal(reader, prototype.getClass)
         sender ! SOAPUnmarshallingResultMessage(o.getValue)
       } catch {
-        case e: Exception =>
-          sender ! SOAPUnmodeledFaultMessage(e, sender)
+        case e: Exception => sender ! SOAPUnmodeledFaultMessage(e)
       }
   }
 }

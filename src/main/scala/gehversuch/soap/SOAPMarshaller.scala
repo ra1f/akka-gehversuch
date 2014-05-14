@@ -1,6 +1,6 @@
 package gehversuch.soap
 
-import akka.actor.{ActorRef, Actor}
+import akka.actor.Actor
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.bind.{JAXBElement, JAXBContext}
 import javax.xml.soap._
@@ -12,26 +12,26 @@ import org.w3c.dom.Document
  * Created by dueerkopra on 02.05.2014.
  */
 
-case class SOAPMarshallingSuccessMessage[T](element: JAXBElement[T], originalSender: ActorRef)
+case class SOAPMarshallingSuccessMessage[T](element: JAXBElement[T])
 
-case class SOAPModeledFaultMessage[T](element: JAXBElement[T], message: String, originalSender: ActorRef)
+case class SOAPModeledFaultMessage[T](element: JAXBElement[T], message: String)
 
-case class SOAPUnmodeledFaultMessage(exception: Exception, originalSender: ActorRef)
+case class SOAPUnmodeledFaultMessage(exception: Exception)
 
 class SOAPMarshaller extends Actor {
 
   def receive = {
 
-    case SOAPMarshallingSuccessMessage(element, originalSender) =>
+    case SOAPMarshallingSuccessMessage(element) =>
 
       val document = marshal(element)
       val soapMessage = MessageFactory.newInstance.createMessage
 
       soapMessage.getSOAPBody.addDocument(document)
 
-      originalSender ! response(soapMessage)
+      sender ! response(soapMessage)
 
-    case SOAPModeledFaultMessage(element, message, originalSender) =>
+    case SOAPModeledFaultMessage(element, message) =>
 
       val document = marshal(element)
       val soapMessage = MessageFactory.newInstance.createMessage
@@ -40,9 +40,9 @@ class SOAPMarshaller extends Actor {
         addFault(new QName(SOAPConstants.URI_NS_SOAP_1_1_ENVELOPE, "SERVER"), message).
         addDetail.addChildElement(SOAPFactory.newInstance.createElement(document.getDocumentElement))
 
-      originalSender ! response(soapMessage)
+      sender ! response(soapMessage)
 
-    case SOAPUnmodeledFaultMessage(exception, originalSender) =>
+    case SOAPUnmodeledFaultMessage(exception) =>
 
       val soapMessage = MessageFactory.newInstance.createMessage
 
@@ -50,7 +50,7 @@ class SOAPMarshaller extends Actor {
         addFault(new QName(SOAPConstants.URI_NS_SOAP_1_1_ENVELOPE, "SERVER"), exception.getClass.getName).
         addDetail.addTextNode(exception.toString)
 
-      originalSender ! response(soapMessage)
+      sender ! response(soapMessage)
   }
 
   def marshal(element: JAXBElement[Any]): Document = {
