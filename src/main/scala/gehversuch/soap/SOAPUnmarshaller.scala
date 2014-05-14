@@ -11,20 +11,17 @@ import javax.xml.stream.XMLInputFactory
  * Created by dueerkopra on 02.05.2014.
  */
 
-case class SOAPUnmarshallingMessage[P](message: CamelMessage, prototype: P)
+case class SOAPUnmarshallingMessage[P](message: String, prototype: P)
+case class SOAPUnmarshallingResultMessage[P](product: P)
 
-class SOAPUnmarshallingActor(serviceDelegatorProps: Props) extends Actor with ActorLogging {
-
-  val serviceDelegator = context.actorOf(serviceDelegatorProps)
+class SOAPUnmarshaller extends Actor with ActorLogging {
 
   def receive = {
 
     case SOAPUnmarshallingMessage(message, prototype) =>
       try {
-
-        val xif = XMLInputFactory newInstance
-        val reader = xif.createXMLStreamReader(new StreamSource(
-          new StringReader(message.body.toString)))
+        val xif = XMLInputFactory.newInstance
+        val reader = xif.createXMLStreamReader(new StreamSource(new StringReader(message)))
         reader.nextTag
 
         while (reader getLocalName match {
@@ -36,13 +33,12 @@ class SOAPUnmarshallingActor(serviceDelegatorProps: Props) extends Actor with Ac
           reader.nextTag
         }
 
-        val jaxbContext = JAXBContext newInstance prototype.getClass
+        val jaxbContext = JAXBContext.newInstance(prototype.getClass)
         val o = jaxbContext.createUnmarshaller.unmarshal(reader, prototype.getClass)
-        serviceDelegator forward (new CamelMessage(o.getValue, message.headers))
+        sender ! SOAPUnmarshallingResultMessage(o.getValue)
       } catch {
-
         case e: Exception =>
-          serviceDelegator forward SOAPMarshallingUnmodeledFaultMessage(e, sender)
+          sender ! SOAPUnmodeledFaultMessage(e, sender)
       }
   }
 }

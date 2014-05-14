@@ -1,4 +1,4 @@
-package gehversuch.soap_alt
+package gehversuch.soap
 
 import akka.actor.{ActorRef, Actor}
 import javax.xml.parsers.DocumentBuilderFactory
@@ -14,11 +14,11 @@ import org.w3c.dom.Document
 
 case class SOAPMarshallingSuccessMessage[T](element: JAXBElement[T], originalSender: ActorRef)
 
-case class SOAPMarshallingModeledFaultMessage[T](element: JAXBElement[T], message: String, originalSender: ActorRef)
+case class SOAPModeledFaultMessage[T](element: JAXBElement[T], message: String, originalSender: ActorRef)
 
-case class SOAPMarshallingUnmodeledFaultMessage(exception: Exception, originalSender: ActorRef)
+case class SOAPUnmodeledFaultMessage(exception: Exception, originalSender: ActorRef)
 
-class SOAPMarshallingActor extends Actor {
+class SOAPMarshaller extends Actor {
 
   def receive = {
 
@@ -31,7 +31,7 @@ class SOAPMarshallingActor extends Actor {
 
       originalSender ! response(soapMessage)
 
-    case SOAPMarshallingModeledFaultMessage(element, message, originalSender) =>
+    case SOAPModeledFaultMessage(element, message, originalSender) =>
 
       val document = marshal(element)
       val soapMessage = MessageFactory.newInstance.createMessage
@@ -42,7 +42,7 @@ class SOAPMarshallingActor extends Actor {
 
       originalSender ! response(soapMessage)
 
-    case SOAPMarshallingUnmodeledFaultMessage(exception, originalSender) =>
+    case SOAPUnmodeledFaultMessage(exception, originalSender) =>
 
       val soapMessage = MessageFactory.newInstance.createMessage
 

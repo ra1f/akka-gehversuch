@@ -1,7 +1,7 @@
 package gehversuch
 
 import akka.actor.{DeadLetter, Props, ActorSystem}
-import gehversuch.customerservice.{CustomerServiceConsumerAltActor}
+import gehversuch.customerservice.{CustomerServiceConsumer}
 
 /**
  * Created by rdu on 30.04.14.
@@ -9,7 +9,7 @@ import gehversuch.customerservice.{CustomerServiceConsumerAltActor}
 object TheSystem extends App {
 
   val system = ActorSystem("gehversuch-system")
-  val consumer = system.actorOf(Props[CustomerServiceConsumerAltActor])
+  val consumer = system.actorOf(Props[CustomerServiceConsumer])
   system.eventStream.subscribe(consumer, classOf[DeadLetter])
 }
 
