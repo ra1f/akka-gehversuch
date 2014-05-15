@@ -10,14 +10,14 @@ import javax.xml.stream.XMLInputFactory
  * Created by dueerkopra on 02.05.2014.
  */
 
-case class SOAPUnmarshallingMessage[P](message: String, prototype: P)
-case class SOAPUnmarshallingResultMessage[P](product: P)
+case class UnmarshallingRequest[P](message: String, prototype: P)
+case class UnmarshallingResponse[P](product: P)
 
 class SOAPUnmarshaller extends Actor with ActorLogging {
 
   def receive = {
 
-    case SOAPUnmarshallingMessage(message, prototype) =>
+    case UnmarshallingRequest(message, prototype) =>
       try {
         val xif = XMLInputFactory.newInstance
         val reader = xif.createXMLStreamReader(new StreamSource(new StringReader(message)))
@@ -34,9 +34,9 @@ class SOAPUnmarshaller extends Actor with ActorLogging {
 
         val jaxbContext = JAXBContext.newInstance(prototype.getClass)
         val o = jaxbContext.createUnmarshaller.unmarshal(reader, prototype.getClass)
-        sender ! SOAPUnmarshallingResultMessage(o.getValue)
+        sender ! UnmarshallingResponse(o.getValue)
       } catch {
-        case e: Exception => sender ! SOAPUnmodeledFaultMessage(e)
+        case e: Exception => sender ! MarshallingUnmodeledFaultRequest(e)
       }
   }
 }

@@ -4,7 +4,7 @@ import akka.actor.{ActorRef, ActorLogging, Actor}
 import de.gehversuch.customerservice._
 import scala.concurrent.{Future, ExecutionContext}
 import java.util.concurrent.ForkJoinPool
-import gehversuch.soap.{SOAPMarshallingSuccessMessage, SOAPModeledFaultMessage, SOAPUnmodeledFaultMessage}
+import gehversuch.soap.{MarshallingRequest, MarshallingModeledFaultRequest, MarshallingUnmodeledFaultRequest}
 
 /**
  * Created by dueerkopra on 13.05.2014.
@@ -27,7 +27,7 @@ class CustomerServiceDelegator extends Actor with ActorLogging {
             case customers: Array[Customer] =>
               val response = new GetCustomersByNameResponse
               response setReturn customers
-              originalSender ! SOAPMarshallingSuccessMessage(objectFactory createGetCustomersByNameResponse response)
+              originalSender ! MarshallingRequest(objectFactory createGetCustomersByNameResponse response)
           }
           f onFailure {
             case e: NoSuchCustomerException => originalSender ! modeledFault(e)
@@ -46,7 +46,7 @@ class CustomerServiceDelegator extends Actor with ActorLogging {
             case customer: Customer =>
               val response = new UpdateCustomerResponse
               response setReturn customer
-              originalSender ! SOAPMarshallingSuccessMessage(objectFactory createUpdateCustomerResponse response)
+              originalSender ! MarshallingRequest(objectFactory createUpdateCustomerResponse response)
           }
           f onFailure {
             case e: NoSuchCustomerException => originalSender ! modeledFault(e)
@@ -58,8 +58,8 @@ class CustomerServiceDelegator extends Actor with ActorLogging {
   def modeledFault(e: NoSuchCustomerException) = {
 
     val faultBean = objectFactory.createNoSuchCustomer(e.getFaultInfo)
-    SOAPModeledFaultMessage(faultBean, e.getMessage)
+    MarshallingModeledFaultRequest(faultBean, e.getMessage)
   }
 
-  def unmodeledFault(e: Exception, originalSender: ActorRef) = SOAPUnmodeledFaultMessage(e)
+  def unmodeledFault(e: Exception, originalSender: ActorRef) = MarshallingUnmodeledFaultRequest(e)
 }
