@@ -16,43 +16,43 @@ class CustomerServiceDelegator extends Actor with ActorLogging {
 
   def receive = {
 
-        case o: GetCustomersByName =>
-          val name = o.getName
-          implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(new ForkJoinPool)
-          val f = Future {
-            customerService getCustomersByName name
-          }
-          val originalSender = sender
-          f onSuccess {
-            case customers: Array[Customer] =>
-              val response = new GetCustomersByNameResponse
-              response setReturn customers
-              originalSender ! MarshallingRequest(objectFactory createGetCustomersByNameResponse response)
-          }
-          f onFailure {
-            case e: NoSuchCustomerException => originalSender ! modeledFault(e)
-            case e: Exception => originalSender ! unmodeledFault(e, originalSender)
-          }
+    case o: GetCustomersByName =>
+      val name = o.getName
+      implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(new ForkJoinPool)
+      val f = Future {
+        customerService getCustomersByName name
+      }
+      onServiceResponse(f)
 
+    case o: UpdateCustomer =>
+      val customer = o.getCustomer
+      implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(new ForkJoinPool)
+      val f = Future {
+        customerService updateCustomer customer
+      }
+      onServiceResponse(f)
+  }
 
-        case o: UpdateCustomer =>
-          val customer = o.getCustomer
-          implicit val ec: ExecutionContext = ExecutionContext.fromExecutor(new ForkJoinPool)
-          val f = Future {
-            customerService updateCustomer customer
-          }
-          val originalSender = sender
-          f onSuccess {
-            case customer: Customer =>
-              val response = new UpdateCustomerResponse
-              response setReturn customer
-              originalSender ! MarshallingRequest(objectFactory createUpdateCustomerResponse response)
-          }
-          f onFailure {
-            case e: NoSuchCustomerException => originalSender ! modeledFault(e)
-            case e: Exception => originalSender ! unmodeledFault(e, originalSender)
-          }
+  def onServiceResponse(f: Future[Any])(implicit ec: ExecutionContext) {
 
+    val originalSender = sender
+
+    f onSuccess {
+      case customers: Array[Customer] =>
+        val response = new GetCustomersByNameResponse
+        response setReturn customers
+        originalSender ! MarshallingRequest(objectFactory createGetCustomersByNameResponse response)
+
+      case customer: Customer =>
+        val response = new UpdateCustomerResponse
+        response setReturn customer
+        originalSender ! MarshallingRequest(objectFactory createUpdateCustomerResponse response)
+    }
+
+    f onFailure {
+      case e: NoSuchCustomerException => originalSender ! modeledFault(e)
+      case e: Exception => originalSender ! unmodeledFault(e, originalSender)
+    }
   }
 
   def modeledFault(e: NoSuchCustomerException) = {
@@ -62,4 +62,5 @@ class CustomerServiceDelegator extends Actor with ActorLogging {
   }
 
   def unmodeledFault(e: Exception, originalSender: ActorRef) = MarshallingUnmodeledFaultRequest(e)
+
 }
